@@ -1,44 +1,91 @@
 package org.example;
 
-import java.util.Arrays;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.*;
 
 public class Main {
-    double[] weight = {0., 0., 0.};
+    double[] weight;
 
-    double bias = 1.0;
+    double bias;
 
     double learning_rate = 1e-5;
 
     public static void main(String[] args) {
-        double[][] x_data = {
-                {73., 80., 75.},
-                {93., 88., 93.},
-                {89., 91., 90.},
-                {96., 98., 100.},
-                {73., 66., 70.},
-                {53., 46., 55.}
-        };
+//        double[][] x_data = {
+//                {73., 80., 75.},
+//                {93., 88., 93.},
+//                {89., 91., 90.},
+//                {96., 98., 100.},
+//                {73., 66., 70.},
+//                {53., 46., 55.}
+//        };
+//
+//        double[][] y_data = {{152.}, {185.}, {180.}, {196.}, {142.}, {101.}};
 
-        double[][] y_data = {{152.}, {185.}, {180.}, {196.}, {142.}, {101.}};
+        Scanner sc = new Scanner(System.in);
+
+        double learning_rate = 0.0;
+        int end_step = 0, print_step = 0;
+        String path = "";
+
+        System.out.print("학습률 설정 : ");
+        learning_rate = sc.nextDouble();
+
+        System.out.print("학습 횟수 : ");
+        end_step = sc.nextInt();
+
+        System.out.print("학습 로그 출력 단위 : ");
+        print_step = sc.nextInt();
+
+        System.out.print("학습 파일 위치 (.vcs) : ");
+        path = sc.next();
 
         Main main = new Main();
 
-        for (int step = 1; step <= 10000; step++) {
-            double[][] hypothesis = main.hypothesis(x_data, y_data[0].length);
-            double cost = main.cost(hypothesis, y_data);
+        Map<String, double[][]> map = main.loadCSV(path);
 
-            main.gradientDescent(hypothesis, x_data, y_data);
+        double[][] x_data = map.get("x"), y_data = map.get("y");
 
-            if (step % 1000 == 0) {
+        main.initialSettings(learning_rate, x_data[0].length);
+        main.learning(x_data, y_data, end_step, print_step);
+    }
+
+    private void initialSettings(double learning_rate, int weight_length) {
+        Random random = new Random();
+        weight = new double[weight_length];
+
+        for (int i = 0; i < weight_length; i++) {
+            weight[i] = random.nextDouble();
+        }
+
+        bias = 0.0;
+
+        this.learning_rate = learning_rate;
+    }
+
+    private void learning(double[][] x_data, double[][] y_data, int end_step, int print_step) {
+        for (int step = 1; step <= end_step; step++) {
+            double[][] hypothesis = hypothesis(x_data, y_data[0].length);
+            double cost = cost(hypothesis, y_data);
+
+            gradientDescent(hypothesis, x_data, y_data);
+
+            if (step % print_step == 0) {
                 System.out.println("Step: " + step + " - Cost: " + cost);
             }
         }
 
+        System.out.println("===============================");
+
         double[][] newInput = {{100., 70., 101.}};
-        double[][] predictedOutput = main.hypothesis(newInput, y_data[0].length);
+        double[][] predictedOutput = hypothesis(newInput, y_data[0].length);
 
         for (double[] data : predictedOutput)
             System.out.println("Predicted data: " + Arrays.toString(data));
+        System.out.println("weight : " + Arrays.toString(weight) + ", bias : " + bias + ", cost : " + cost(hypothesis(x_data, y_data[0].length), y_data));
     }
 
     private void gradientDescent(double[][] hypothesis, double[][] x_data, double[][] y_data) {
@@ -49,9 +96,9 @@ public class Main {
         for (int i = 0; i < x_data.length; i++) {
             double error = hypothesis[i][0] - y_data[i][0];
             for (int j = 0; j < x_data[i].length; j++) {
-                w_gradients[j] += (1.0 / x_data.length) * error * x_data[i][j];
+                w_gradients[j] += (error * x_data[i][j]) / (double) x_data.length;
             }
-            b_gradient += (1.0 / x_data.length) * error;
+            b_gradient += error / (double) x_data.length;
         }
 
         for (int i = 0; i < weight.length; i++) {
@@ -86,5 +133,37 @@ public class Main {
         }
 
         return data;
+    }
+
+    private Map<String, double[][]> loadCSV(String path) {
+        Map<String, double[][]> map = null;
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
+            String line;
+
+            List<double[]> x_list = new ArrayList<>();
+            List<double[]> y_list = new ArrayList<>();
+
+            while ((line = reader.readLine()) != null) {
+                String[] fields = line.split(",");
+                double[] x = new double[fields.length - 1];
+
+                for (int i = 0; i < x.length; i++) {
+                    x[i] = Double.parseDouble(fields[i]);
+                }
+
+                x_list.add(x);
+                y_list.add(new double[] {Double.parseDouble(fields[fields.length - 1])});
+            }
+
+            map = new HashMap<>();
+
+            map.put("x", x_list.toArray(new double[x_list.size()][x_list.get(0).length]));
+            map.put("y", y_list.toArray(new double[y_list.size()][y_list.get(0).length]));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return map;
     }
 }
