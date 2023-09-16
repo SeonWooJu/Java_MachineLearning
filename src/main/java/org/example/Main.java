@@ -47,11 +47,11 @@ public class Main {
 
 
         for (int i = 0; i < x_data.length; i++) {
+            double error = hypothesis[i][0] - y_data[i][0];
             for (int j = 0; j < x_data[i].length; j++) {
-                double error = hypothesis[i][0] - y_data[i][0];
-                w_gradients[j] += (2.0 / x_data.length) * error * x_data[i][j];
+                w_gradients[j] += (1.0 / x_data.length) * error * x_data[i][j];
             }
-            b_gradient += (2.0 / x_data.length) * (hypothesis[i][0] - y_data[i][0]);
+            b_gradient += (1.0 / x_data.length) * error;
         }
 
         for (int i = 0; i < weight.length; i++) {
