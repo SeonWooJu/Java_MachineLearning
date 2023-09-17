@@ -28,7 +28,7 @@ public class Main {
 
         double learning_rate = 0.0;
         int end_step = 0, print_step = 0;
-        String path = "";
+        String path = "", test_path = "";
 
         System.out.print("학습률 설정 : ");
         learning_rate = sc.nextDouble();
@@ -42,14 +42,17 @@ public class Main {
         System.out.print("학습 파일 위치 (.vcs) : ");
         path = sc.next();
 
+        System.out.print("학습 후 Test 파일 위치 (.vcs) : ");
+        test_path = sc.next();
+
         Main main = new Main();
 
-        Map<String, double[][]> map = main.loadCSV(path);
+        Map<String, double[][]> map = main.loadCSV(path, test_path);
 
-        double[][] x_data = map.get("x"), y_data = map.get("y");
+        double[][] x_data = map.get("x"), y_data = map.get("y"), test_data = map.get("test");
 
         main.initialSettings(learning_rate, x_data[0].length);
-        main.learning(x_data, y_data, end_step, print_step);
+        main.learning(x_data, y_data, end_step, print_step, test_data);
     }
 
     private void initialSettings(double learning_rate, int weight_length) {
@@ -65,7 +68,7 @@ public class Main {
         this.learning_rate = learning_rate;
     }
 
-    private void learning(double[][] x_data, double[][] y_data, int end_step, int print_step) {
+    private void learning(double[][] x_data, double[][] y_data, int end_step, int print_step, double[][] test_data) {
         for (int step = 1; step <= end_step; step++) {
             double[][] hypothesis = hypothesis(x_data, y_data[0].length);
             double cost = cost(hypothesis, y_data);
@@ -76,11 +79,8 @@ public class Main {
                 System.out.println("Step: " + step + " - Cost: " + cost);
             }
         }
-
         System.out.println("===============================");
-
-        double[][] newInput = {{100., 70., 101.}};
-        double[][] predictedOutput = hypothesis(newInput, y_data[0].length);
+        double[][] predictedOutput = hypothesis(test_data, y_data[0].length);
 
         for (double[] data : predictedOutput)
             System.out.println("Predicted data: " + Arrays.toString(data));
@@ -91,7 +91,7 @@ public class Main {
         double[] w_gradients = new double[weight.length];
         double b_gradient = 0.0;
 
-
+        // 최적의 W와 b를 찾기 위해 cost를 미분한 식을 응용하여 구현
         for (int i = 0; i < x_data.length; i++) {
             double error = hypothesis[i][0] - y_data[i][0];
             for (int j = 0; j < x_data[i].length; j++) {
@@ -109,6 +109,7 @@ public class Main {
     private double cost(double[][] hypothesis, double[][] y_data) {
         double data = 0.0, var = 0.0;
 
+        // 행열을 이용한 cost/loss 함수의 수식을 for문을 사용하여 구현
         for (int i = 0; i < hypothesis.length; i++) {
             for (int j = 0; j < hypothesis[i].length; j++) {
                 var = hypothesis[i][j] - y_data[i][j];
@@ -122,6 +123,7 @@ public class Main {
     private double[][] hypothesis(double[][] x_data, int y_length) {
         double[][] data = new double[x_data.length][y_length];
 
+        // 행열을 응용한 hypothesis의 수식을 for문을 사용하여 구연
         for (int k = 0; k < y_length; k++) {
             for (int i = 0; i < x_data.length; i++) {
                 for (int j = 0; j < x_data[i].length; j++) {
@@ -134,14 +136,18 @@ public class Main {
         return data;
     }
 
-    private Map<String, double[][]> loadCSV(String path) {
+    private Map<String, double[][]> loadCSV(String path, String test_path) {
         Map<String, double[][]> map = null;
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
+        try (
+                BufferedReader reader = new BufferedReader(new FileReader(path));
+                BufferedReader test_reader = new BufferedReader(new FileReader(test_path))
+        ) {
             String line;
 
             List<double[]> x_list = new ArrayList<>();
             List<double[]> y_list = new ArrayList<>();
+            List<double[]> test_list = new ArrayList<>();
 
             while ((line = reader.readLine()) != null) {
                 String[] fields = line.split(",");
@@ -155,10 +161,23 @@ public class Main {
                 y_list.add(new double[] {Double.parseDouble(fields[fields.length - 1])});
             }
 
+            // test data load
+            while ((line = test_reader.readLine()) != null) {
+                String[] fields = line.split(",");
+                double[] test = new double[fields.length];
+
+                for (int i = 0; i< test.length; i++) {
+                    test[i] = Double.parseDouble(fields[i]);
+                }
+
+                test_list.add(test);
+            }
+
             map = new HashMap<>();
 
             map.put("x", x_list.toArray(new double[x_list.size()][x_list.get(0).length]));
             map.put("y", y_list.toArray(new double[y_list.size()][y_list.get(0).length]));
+            map.put("test", test_list.toArray(new double[test_list.size()][test_list.get(0).length]));
         } catch (IOException e) {
             e.printStackTrace();
         }
