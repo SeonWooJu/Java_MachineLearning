@@ -84,7 +84,7 @@ public class Main {
 
         for (double[] data : predictedOutput)
             System.out.println("Predicted data: " + Arrays.toString(data));
-        System.out.println("weight : " + Arrays.toString(weight) + ", bias : " + bias + ", cost : " + cost(hypothesis(x_data, y_data[0].length), y_data));
+        System.out.println("weight : " + Arrays.toString(weight) + "\nbias : " + bias + ", cost : " + cost(hypothesis(x_data, y_data[0].length), y_data));
     }
 
     private void gradientDescent(double[][] hypothesis, double[][] x_data, double[][] y_data) {
@@ -109,7 +109,7 @@ public class Main {
     private double cost(double[][] hypothesis, double[][] y_data) {
         double data = 0.0, var = 0.0;
 
-        // 행열을 이용한 cost/loss 함수의 수식을 for문을 사용하여 구현
+        // 행렬을 이용한 cost/loss 함수의 수식을 for문을 사용하여 구현
         for (int i = 0; i < hypothesis.length; i++) {
             for (int j = 0; j < hypothesis[i].length; j++) {
                 var = hypothesis[i][j] - y_data[i][j];
@@ -123,7 +123,7 @@ public class Main {
     private double[][] hypothesis(double[][] x_data, int y_length) {
         double[][] data = new double[x_data.length][y_length];
 
-        // 행열을 응용한 hypothesis의 수식을 for문을 사용하여 구연
+        // 행렬을 응용한 hypothesis의 수식을 for문을 사용하여 구연
         for (int k = 0; k < y_length; k++) {
             for (int i = 0; i < x_data.length; i++) {
                 for (int j = 0; j < x_data[i].length; j++) {
